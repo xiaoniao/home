@@ -1,0 +1,80 @@
+package com.handmark.pulltorefresh.library;
+
+import java.util.HashSet;
+
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+
+import com.handmark.pulltorefresh.library.internal.LoadingLayout;
+
+// LoadingLayout 代理 ( 用于操作LoadingLayout实例 )
+public class LoadingLayoutProxy implements ILoadingLayout {
+
+    private final HashSet<LoadingLayout> mLoadingLayouts; // LoadingLayout集合
+
+    // 构造方法
+    LoadingLayoutProxy() {
+        mLoadingLayouts = new HashSet<LoadingLayout>();
+    }
+
+    /**
+     * This allows you to add extra LoadingLayout instances to this proxy. This is only necessary if you keep your own
+     * instances, and want to have them included in any
+     * {@link PullToRefreshBase#createLoadingLayoutProxy(boolean, boolean) createLoadingLayoutProxy(...)} calls.
+     * 
+     * @param layout - LoadingLayout to have included.
+     */
+    public void addLayout(LoadingLayout layout) {
+        if (null != layout) {
+            mLoadingLayouts.add(layout); // 添加进集合
+        }
+    }
+
+    @Override
+    public void setLastUpdatedLabel(CharSequence label) {
+        /** 循环遍历设置上次更新 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setLastUpdatedLabel(label);
+        }
+    }
+
+    @Override
+    public void setLoadingDrawable(Drawable drawable) {
+        /** 循环遍历设置图片 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setLoadingDrawable(drawable);
+        }
+    }
+
+    @Override
+    public void setRefreshingLabel(CharSequence refreshingLabel) {
+        /** 循环遍历设置正在刷新内容 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setRefreshingLabel(refreshingLabel);
+        }
+    }
+
+    @Override
+    public void setPullLabel(CharSequence label) {
+        /** 循环遍历设下拉刷新内容 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setPullLabel(label);
+        }
+    }
+
+    @Override
+    public void setReleaseLabel(CharSequence label) {
+        /** 循环遍历设置松手内容 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setReleaseLabel(label);
+        }
+    }
+
+    @Override
+    public void setTextTypeface(Typeface tf) {
+        /** 循环遍历设置字体样式 **/
+        for (LoadingLayout layout : mLoadingLayouts) {
+            layout.setTextTypeface(tf);
+        }
+    }
+}

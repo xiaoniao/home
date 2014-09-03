@@ -1,0 +1,24 @@
+package com.test.Thread;
+
+public class ThreadA {
+
+    public static void main(String[] args) {
+        Thread thread = new ThreadB();
+        thread.start();
+        
+        synchronized (thread) {
+            
+            try {
+                thread.wait();
+            } catch (InterruptedException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            
+            try {
+                
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+}

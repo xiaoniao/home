@@ -1,0 +1,162 @@
+package com.example.mygson;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonStreamParser;
+import com.google.gson.reflect.TypeToken;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // 序列化 转换为json字符串
+//        Gson gson = new Gson();
+//        System.out.println(gson.toJson(null));
+//        System.out.println(gson.toJson(1));
+//        System.out.println(gson.toJson(Long.valueOf(1)));
+//        System.out.println(gson.toJson(new int[] {1}));
+//        System.out.println(gson.toJson("abcd"));
+        // 反序列化 json转java object
+        
+        // test_Gson();
+        test_json_stream_parser();
+    }
+
+    public void test_FieldAttributes() {
+        // FieldAttributes 使用的是反射获得的Field字段属性值
+        Field field = null;
+        FieldAttributes fieldAttributes = new FieldAttributes(field); // 参数是Field
+
+        fieldAttributes.getAnnotation(Annotation.class); //  <T extends Annotation>
+        fieldAttributes.getAnnotations();                //  Collection<Annotation>
+        fieldAttributes.getDeclaredClass();              //  Class<?>
+        fieldAttributes.getDeclaredType();               //  Type
+        fieldAttributes.getDeclaringClass();             //  Type<?>
+        fieldAttributes.getName();                       //  String
+        int modifier = 0;
+        fieldAttributes.hasModifier(modifier);           //  boolean
+        
+        Type listParmeterizedType = new TypeToken<List<String>>() {}.getType();
+    }
+    
+    public void test_Gson(){
+        
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        
+        /** 实体类 **/
+        System.out.println("实体类");
+        MyType myType = new MyType();
+        myType.id = 1;
+        myType.title = "haha";
+
+        String json = gson.toJson(myType, MyType.class);
+        //String json = gson.toJson(myType); // 也可以不指定类型，如果是实体类的话，可以直接获得类型 myType.getClass().getSimpleName()
+        System.out.println(json);
+        
+        MyType myType2 = gson.fromJson(json, MyType.class); // 需要指定类型
+        System.out.println(myType2.id);
+        System.out.println(myType2.title);
+        
+        /** 集合 _普通**/
+        System.out.println("集合 _普通");
+        List<String> list = new ArrayList<String>();
+        list.add("one");
+        list.add("two");
+        String json_list = gson.toJson(list);
+        System.out.println(json_list);
+        
+        Type listType = new TypeToken<List<String>>() {}.getType();
+        
+        // fromJson 从字符串转换的时候必须指定类型 类型是Type 或 Class
+        List<String> list_string = gson.fromJson(json_list, listType);
+        
+        for (int i = 0; i < list_string.size(); i++) {
+            System.out.println(list_string.get(i));
+        }
+        
+        /** 集合_实体类 **/
+        System.out.println("集合_实体类");
+        List<MyType> myTypeList = new ArrayList<MainActivity.MyType>();
+        for (int i = 0; i < 3; i++) {
+            MyType myType3 = new MyType();
+            myType3.id = i;
+            myType3.title = "title" + i;
+            myTypeList.add(myType3);
+        }
+        String myTypeListJson = gson.toJson(myTypeList); // 集合实体类也不用指定类型的啊,郁闷
+        Type myTypeListType = new TypeToken<List<MyType>>() {}.getType();
+        // String myTypeListJson = gson.toJson(myTypeList, myTypeListType);
+        System.out.println(myTypeListJson);
+        
+        List<MyType> myTypeList2 = gson.fromJson(myTypeListJson, myTypeListType);
+        
+        for (int i = 0; i < myTypeList2.size(); i++) {
+            System.out.println(myTypeList2.get(i).id);
+            System.out.println(myTypeList2.get(i).title);
+        }
+        
+        
+    }
+    
+    public static class MyType {
+        int id;
+        String title;
+    }
+    
+    // to Json 可以不指定类型
+    
+    public void test_json_stream_parser() { 
+        List<MyType> myTypeList = new ArrayList<MyType>();
+        for (int i = 0; i < 3; i++) {
+            MyType myType3 = new MyType();
+            myType3.id = i;
+            myType3.title = "haha" + i;
+            myTypeList.add(myType3);
+        }
+        
+        PageBean pageBean = new PageBean();
+        pageBean.current = 1;
+        pageBean.list = myTypeList;
+        
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        
+        // String pageJson = gson.toJson(pageBean, PageBean.class);
+        String pageJson = gson.toJson(pageBean);
+        System.out.println(pageJson);
+        
+        JsonStreamParser parse = new JsonStreamParser(pageJson);
+        JsonElement element;    // 一个element 就是一个对象[]
+        synchronized (parse) {
+            if (parse.hasNext()) {
+                element =  parse.next();
+                System.out.println(element.toString());
+                System.out.println(">>>>>>>");
+                
+                // System.out.println(element.getAsString());
+                //System.out.println(element.getAsJsonObject());
+                System.out.println(element.getAsJsonArray());
+            }
+        }
+        
+    }
+    
+    public static class PageBean {
+        int current;
+        List list;
+    }
+
+}

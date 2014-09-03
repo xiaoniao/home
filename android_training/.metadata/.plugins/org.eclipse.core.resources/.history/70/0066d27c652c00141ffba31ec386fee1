@@ -1,0 +1,13 @@
+package com.test.Thread;
+
+public class User {
+
+    private String code;
+    private int    cash;
+
+    User(String code, int cash) {
+        this.code = code;
+        this.cash = cash;
+    }
+
+}

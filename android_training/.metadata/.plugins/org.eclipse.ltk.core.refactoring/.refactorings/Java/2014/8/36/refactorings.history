@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;IDownload.java&apos; to &apos;Java/src/com.test.interfa&apos;&#x0D;&#x0A;- Original project: &apos;Java&apos;&#x0D;&#x0A;- Destination element: &apos;Java/src/com.test.interfa&apos;&#x0D;&#x0A;- Original element: &apos;com.test.IDownload.java&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move compilation unit" destination="/src&lt;com.test.interfa" element1="/src&lt;com.test{IDownload.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" patterns="*" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1409456728840" units="1" version="1.0"/>
+</session>

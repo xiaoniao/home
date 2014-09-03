@@ -1,0 +1,186 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.example.android.threadsample;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+
+/**
+ * 解析线程：这个线程解析ByteArray图片
+ * 
+ * 这个线程由PhotoTask管理和实例化,只要它实现了TaskRunnableDecodeMethods接口
+ */
+class PhotoDecodeRunnable implements Runnable {
+    
+    // log
+    private static final String LOG_TAG = "PhotoDecodeRunnable";
+
+	// 尝试解析图片次数
+	private static final int    NUMBER_OF_DECODE_TRIES  = 2;
+
+	// 暂停时间
+	private static final long   SLEEP_TIME_MILLISECONDS = 250;
+
+	// 状态码
+	static final int            DECODE_STATE_FAILED     = -1;  // 解析失败
+	static final int            DECODE_STATE_STARTED    = 0;   // 解析开始
+	static final int            DECODE_STATE_COMPLETED  = 1;   // 解析完成
+
+	// 接口实例
+	final TaskRunnableDecodeMethods mPhotoTask;
+
+	// 构造方法 通过接口和PhotoTask关联 相当于获得PhotoTask的引用
+    PhotoDecodeRunnable(TaskRunnableDecodeMethods downloadTask) {
+        mPhotoTask = downloadTask;
+    }
+    
+	// 自定义接口
+	interface TaskRunnableDecodeMethods {
+
+		void   setImageDecodeThread(Thread currentThread);
+		byte[] getByteBuffer();
+		void   handleDecodeState(int state);
+		int    getTargetWidth();
+		int    getTargetHeight();
+		void   setImage(Bitmap image);
+	}
+
+	@Override
+	public void run() {
+
+	    // 保存当前线程，以便PhotoTask可以停止线程
+		mPhotoTask.setImageDecodeThread(Thread.currentThread());
+
+		// 获得CacheBuffer
+		byte[] imageBuffer = mPhotoTask.getByteBuffer();
+
+		Bitmap returnBitmap = null;
+
+		// 解析下载的图片
+		try {
+			
+		    // 发送状态 开始解析
+			mPhotoTask.handleDecodeState(DECODE_STATE_STARTED);
+
+			BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+
+			int targetWidth = mPhotoTask.getTargetWidth();
+			int targetHeight = mPhotoTask.getTargetHeight();
+
+			if (Thread.interrupted()) {   // 检测线程是否被停止
+				return;
+			}
+
+			bitmapOptions.inJustDecodeBounds = true;
+
+			BitmapFactory.decodeByteArray(imageBuffer, 0, imageBuffer.length, bitmapOptions);
+
+			int hScale = bitmapOptions.outHeight / targetHeight;
+			int wScale = bitmapOptions.outWidth / targetWidth;
+
+			int sampleSize = Math.max(hScale, wScale);
+
+			if (sampleSize > 1) {
+				bitmapOptions.inSampleSize = sampleSize;
+			}
+
+			if (Thread.interrupted()) {   // 检测线程是否被停止
+				return;
+			}
+
+			bitmapOptions.inJustDecodeBounds = false;
+
+			// 开始解析buffer，如果OOM会抛出异常，并再次解析
+			/*
+			 * This does the actual decoding of the buffer. 
+			 * 
+			 * If the decode encounters an an out-of-memory error, 
+			 * 
+			 * it may throw an Exception or an Error, 
+			 * 
+			 * both of which need to be handled. 
+			 * 
+			 * Once the problem is handled, the decode is re-tried.
+			 */
+			for (int i = 0; i < NUMBER_OF_DECODE_TRIES; i++) {
+				try {
+					// Tries to decode the image buffer
+					returnBitmap = BitmapFactory.decodeByteArray(imageBuffer, 0, imageBuffer.length, bitmapOptions);
+					/*
+					 * If the decode works, no Exception or Error has occurred. break;
+					 * 
+					 * /* If the decode fails, this block tries to get more memory.
+					 */
+				} catch (Throwable e) {
+
+					// Logs an error
+					Log.e(LOG_TAG, "Out of memory in decode stage. Throttling.");
+
+					/*
+					 * Tells the system that garbage collection is necessary. Notice that collection may or may not occur.
+					 */
+					java.lang.System.gc();
+
+					if (Thread.interrupted()) {
+						return;
+
+					}
+					/*
+					 * Tries to pause the thread for 250 milliseconds,
+					 * 
+					 * and catches an Exception if something tries to activate the thread before it wakes up.
+					 */
+					try {
+						Thread.sleep(SLEEP_TIME_MILLISECONDS);
+					} catch (java.lang.InterruptedException interruptException) {
+						return;
+					}
+				}
+			}
+
+			// Catches exceptions if something tries to activate the
+			// Thread incorrectly.
+		} finally {
+			// If the decode failed, there's no bitmap.
+			if (null == returnBitmap) {
+
+				// Sends a failure status to the PhotoTask
+				mPhotoTask.handleDecodeState(DECODE_STATE_FAILED);
+
+				// Logs the error
+				Log.e(LOG_TAG, "Download failed in PhotoDecodeRunnable");
+
+			} else {
+
+				// Sets the ImageView Bitmap
+				mPhotoTask.setImage(returnBitmap); // 设置显示图片
+
+				// Reports a status of "completed"
+				mPhotoTask.handleDecodeState(DECODE_STATE_COMPLETED);
+			}
+
+			// Sets the current Thread to null, releasing its storage
+			mPhotoTask.setImageDecodeThread(null);
+
+			// Clears the Thread's interrupt flag
+			Thread.interrupted();
+
+		}
+
+	}
+}

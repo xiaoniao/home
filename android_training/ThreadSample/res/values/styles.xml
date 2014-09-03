@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Defines a style resource for a black background -->
+<resources>
+
+    <style name="Theme.NoBackground" parent="@android:style/Theme.NoTitleBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+</resources>

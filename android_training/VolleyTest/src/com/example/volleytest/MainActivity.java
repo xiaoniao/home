@@ -1,0 +1,78 @@
+package com.example.volleytest;
+
+import org.json.JSONObject;
+
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.ImageView;
+
+import com.android.volley.Request.Method;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.ImageLoader.ImageListener;
+import com.android.volley.toolbox.ImageRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+public class MainActivity extends ActionBarActivity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+
+		final ImageView imageView = (ImageView) this.findViewById(R.id.imageView1);
+		//
+
+		// RequestQueue
+		// Request
+		// --------StringRequest
+		// --------JsonRequest
+		// --------JsonObjectRequest
+		// --------JsonArrayRequest
+
+		String url = "http://www.baidu.com/img/bd_logo.png";
+
+		RequestQueue requestQueue = Volley.newRequestQueue(this);
+
+		ImageRequest imageRequest = new ImageRequest(url, new Listener<Bitmap>() {
+
+			@Override
+			public void onResponse(Bitmap response) {
+				imageView.setImageBitmap(response);
+			}
+		}, 0, 0, Config.RGB_565, new ErrorListener() {
+
+			@Override
+			public void onErrorResponse(VolleyError error) {
+				System.out.println(error.toString());
+				imageView.setBackgroundResource(R.drawable.ic_launcher);
+			}
+		});
+
+		requestQueue.add(imageRequest);
+
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+}

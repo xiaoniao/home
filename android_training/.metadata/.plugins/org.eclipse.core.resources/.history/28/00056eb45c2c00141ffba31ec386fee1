@@ -1,0 +1,17 @@
+package com.test.Thread;
+
+public class MyRunnable implements Runnable {
+
+    private Foo foo = new Foo();
+    
+    public static void main(String[] args) {
+        
+    }
+    
+    @Override
+    public void run() {
+
+        
+    }
+
+}

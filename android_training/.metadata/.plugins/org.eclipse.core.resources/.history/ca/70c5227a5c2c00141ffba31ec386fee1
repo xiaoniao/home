@@ -1,0 +1,7 @@
+package com.test.Thread;
+
+public class Foo {
+
+    private int x = 100;
+    
+}

@@ -1,0 +1,9 @@
+package com.test.Thread;
+
+public class MyCommon extends Thread {
+
+    @Override
+    public void run() {
+        
+    }
+}

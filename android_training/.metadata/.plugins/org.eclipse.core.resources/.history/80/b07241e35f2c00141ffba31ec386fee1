@@ -1,0 +1,13 @@
+package com.test.Thread;
+
+public class ThreadB extends Thread {
+
+    int total;
+    
+    @Override
+    public void run() {
+       synchronized (mutex) {
+        
+    }
+    }
+}

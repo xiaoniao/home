@@ -1,0 +1,232 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package com.example.android.threadsample;
+
+import java.lang.ref.WeakReference;
+import java.net.URL;
+
+import android.graphics.Bitmap;
+
+import com.example.android.threadsample.PhotoDecodeRunnable.TaskRunnableDecodeMethods;
+import com.example.android.threadsample.PhotoDownloadRunnable.TaskRunnableDownloadMethods;
+
+/**
+ * 这个类，管理着PhotoDownloadRunnable 和 PhotoDownloadRunnable 两个类 , 它不代表下载图片和解析图片线程 相反的，它管理着那些持续工作的任务.
+ * 
+ * 它通过实现TaskRunnableDownloadMethods 和 TaskRunnableDecodeMethods接口 来管理,并且把自己当作下载和解析类的参数
+ * 
+ * 实际上，它允许委托类下载线程 》》》 什么呀 看不懂
+ * 
+ * 这个类可以汇集并且再利用
+ */
+public class PhotoTask implements TaskRunnableDownloadMethods, TaskRunnableDecodeMethods {
+
+    // 创建一个PhotoView弱引用
+    private WeakReference<PhotoView> mImageWeakRef; // 保存真正的图片控件
+
+    private URL                 mImageURL;          // 图片URL路径
+    private int                 mTargetHeight;      // 解析图片时的高
+    private int                 mTargetWidth;       // 解析图片时的宽
+    private boolean             mCacheEnabled;      // 是否允许缓存
+    byte[]                      mImageBuffer;       // 一个缓冲，容纳图片的字节
+    private Bitmap              mDecodedImage;      // 解析的Bitmap
+    
+    Thread                      mThreadThis;        // 要运行的线程 这个是在什么地方赋值的？ 使用的是在PhotoManager中的219行
+    private Thread              mCurrentThread;     // 正在运行的线程
+   
+    private Runnable            mDownloadRunnable;  // 一个下载线程
+    private Runnable            mDecodeRunnable;    // 一个解析线程
+    
+    // 一个单例线程池对象PhotoManager实例
+    private static PhotoManager sPhotoManager;
+
+    /** 构造方法 实例化下载、解析线程和线程池管理对象  **/
+    PhotoTask() {
+        mDownloadRunnable =  new PhotoDownloadRunnable(this);     // 实例化下载线程
+        mDecodeRunnable   =  new PhotoDecodeRunnable(this);       // 实例化解析线程
+        sPhotoManager     =  PhotoManager.getInstance();
+    }
+
+    /** 初始化任务 **/
+    void initializeDownloaderTask(PhotoManager photoManager, PhotoView photoView, boolean cacheFlag) {
+        sPhotoManager = photoManager;                             // 赋值线程池对象
+        mImageURL = photoView.getLocation();                      // 获得赋值图片URL
+        mImageWeakRef = new WeakReference<PhotoView>(photoView);  // 保存真正的图片控件弱引用对象
+        mCacheEnabled = cacheFlag;                                // 是否允许缓存
+        mTargetWidth = photoView.getWidth();                      // 获得图片宽
+        mTargetHeight = photoView.getHeight();                    // 获得图片高
+    }
+
+    // 实现自 下载线程接口
+    @Override
+    public byte[] getByteBuffer() {                               // 两个接口中都有这个方法 怎么处理
+        return mImageBuffer;
+    }
+
+    /** 回收资源 **/
+    void recycle() {
+        if (null != mImageWeakRef) {
+            mImageWeakRef.clear();  // 清空并置空弱引用对象
+            mImageWeakRef = null;
+        }
+        mImageBuffer = null;    // 置空byteBuffer
+        mDecodedImage = null;   // 置空Bitmap
+    }
+
+    // 实现自 下载线程接口
+    @Override
+    public int getTargetWidth() {
+        return mTargetWidth;
+    }
+
+    // 实现自 下载线程接口
+    @Override
+    public int getTargetHeight() {
+        return mTargetHeight;
+    }
+
+    // 是否允许缓存
+    boolean isCacheEnabled() {
+        return mCacheEnabled;
+    }
+
+    // 实现自 下载线程接口
+    @Override
+    public URL getImageURL() {
+        return mImageURL;
+    }
+
+    // 实现自 下载线程接口
+    @Override
+    public void setByteBuffer(byte[] imageBuffer) {
+        mImageBuffer = imageBuffer;
+    }
+
+    // 想PhotoManager发送当前任务的状态
+    void handleState(int state) {
+        sPhotoManager.handleState(this, state);
+    }
+
+    // 返回Bitmap
+    Bitmap getImage() {
+        return mDecodedImage;
+    }
+
+    // 返回下载Runnable
+    Runnable getHTTPDownloadRunnable() {
+        return mDownloadRunnable;
+    }
+
+    // 返回解析Runnable
+    Runnable getPhotoDecodeRunnable() {
+        return mDecodeRunnable;
+    }
+
+    // 返回 PhototView
+    public PhotoView getPhotoView() {
+        if (null != mImageWeakRef) {
+            return mImageWeakRef.get();
+        }
+        return null;
+    }
+
+    /*
+     * 返回当前正在运行的线程 mCurrentThread
+     * 
+     * The lock is needed because the Thread object reference is stored in the Thread object itself, and that object can
+     * be changed by processes outside of this app.
+     */
+    public Thread getCurrentThread() {
+        synchronized (sPhotoManager) {
+            return mCurrentThread;
+        }
+    }
+
+    /*
+     * 设置一个当前线程 mCurrentThread lock原因见上
+     */
+    public void setCurrentThread(Thread thread) {
+        synchronized (sPhotoManager) {
+            mCurrentThread = thread;
+        }
+    }
+
+    // 实现自 解析线程
+    @Override
+    public void setImage(Bitmap decodedImage) {
+        mDecodedImage = decodedImage;
+    }
+
+    // 实现自 下载线程
+    @Override
+    public void setDownloadThread(Thread currentThread) {
+        setCurrentThread(currentThread);
+    }
+
+    // 实现自 下载线程 PhotoDownloadRunnable. Passes the download state to the ThreadPool object.
+    @Override
+    public void handleDownloadState(int state) {
+        int outState;
+        switch (state) {
+            case PhotoDownloadRunnable.HTTP_STATE_COMPLETED: // 完成
+
+                outState = PhotoManager.DOWNLOAD_COMPLETE;
+
+                break;
+            case PhotoDownloadRunnable.HTTP_STATE_FAILED: // 失败
+
+                outState = PhotoManager.DOWNLOAD_FAILED;
+
+                break;
+            default:
+                outState = PhotoManager.DOWNLOAD_STARTED; // 开始
+
+                break;
+        }
+        // 调用上面的一个方法
+        handleState(outState);
+    }
+
+    // 实现自 解析线程
+    @Override
+    public void setImageDecodeThread(Thread currentThread) {
+        setCurrentThread(currentThread);
+    }
+
+    // 实现自 解析线程
+    @Override
+    public void handleDecodeState(int state) {
+        int outState;
+        switch (state) {
+            case PhotoDecodeRunnable.DECODE_STATE_COMPLETED: // 完成
+
+                outState = PhotoManager.TASK_COMPLETE;
+
+                break;
+            case PhotoDecodeRunnable.DECODE_STATE_FAILED: // 失败
+
+                outState = PhotoManager.DOWNLOAD_FAILED;
+
+                break;
+            default:
+
+                outState = PhotoManager.DECODE_STARTED; // 开始
+
+                break;
+        }
+
+        // 调用上面方法
+        handleState(outState);
+    }
+}

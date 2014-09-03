@@ -1,0 +1,44 @@
+package com.example.wifimanager;
+
+import java.util.List;
+
+import android.app.Activity;
+import android.content.Context;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
+import android.os.Bundle;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // 创建wifi -->需要添加权限 _ android.permission.CHANGE_WIFI_STATE
+
+        WifiManager WifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = String.format("\"%s\"", "wifi2014");
+        wifiConfiguration.preSharedKey = String.format("\"%s\"", "mykeyllll");
+
+        int netId = WifiManager.addNetwork(wifiConfiguration); // 获得一个网络id
+
+        if (netId != -1) {
+            WifiManager.enableNetwork(netId, false); // 通过网络id，开启wifi
+        }
+
+        // 查看wifi列表 需要权限 _ android.permission.ACCESS_WIFI_STATE
+        
+        List<WifiConfiguration> wifiConfigurationList = WifiManager.getConfiguredNetworks();
+        
+        if (wifiConfigurationList != null) {
+            for (int i = 0; i < wifiConfigurationList.size(); i++) {
+                WifiConfiguration config = wifiConfigurationList.get(i);
+                System.out.println("i : " + i + " BSSID : " + config.BSSID + " preSharedKey : " + config.preSharedKey
+                        + " networkId : " + config.networkId + " priority : " + config.priority + "status : "
+                        + config.status);
+            }
+        }
+    }
+}

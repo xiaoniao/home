@@ -1,0 +1,57 @@
+package com.google.samples.apps.iosched.io;
+
+import com.google.samples.apps.iosched.io.model.Room;
+import com.google.samples.apps.iosched.provider.ScheduleContract;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
+import android.content.ContentProviderOperation;
+import android.content.Context;
+import android.net.Uri;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import static com.google.samples.apps.iosched.util.LogUtils.makeLogTag;
+
+public class RoomsHandler extends JSONHandler {
+
+    private static final String   TAG    = makeLogTag(RoomsHandler.class);
+
+    // map from room ID to Room model object
+    private HashMap<String, Room> mRooms = new HashMap<String, Room>();
+
+    public RoomsHandler(Context context) {
+        super(context);
+    }
+
+    @Override
+    public void process(JsonElement element) {
+        for (Room room : new Gson().fromJson(element, Room[].class)) {
+            mRooms.put(room.id, room);
+        }
+    }
+
+    @Override
+    public void cacheObject(Object object) {
+        mRooms
+        
+
+    }
+
+    @Override
+    public void makeContentProviderOperations(ArrayList<ContentProviderOperation> list) {
+        Uri uri = ScheduleContract.addCallerIsSyncAdapterParameter(ScheduleContract.Rooms.CONTENT_URI);
+
+        // The list of rooms is not large, so for simplicity we delete all of them and repopulate
+        list.add(ContentProviderOperation.newDelete(uri).build());
+        for (Room room : mRooms.values()) {
+            ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(uri);
+            builder.withValue(ScheduleContract.Rooms.ROOM_ID, room.id);
+            builder.withValue(ScheduleContract.Rooms.ROOM_NAME, room.name);
+            builder.withValue(ScheduleContract.Rooms.ROOM_FLOOR, room.floor);
+            list.add(builder.build());
+        }
+    }
+
+}

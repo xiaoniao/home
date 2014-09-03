@@ -1,0 +1,49 @@
+package com.google.samples.apps.iosched.io;
+
+import com.google.gson.JsonElement;
+
+import android.content.ContentProviderOperation;
+import android.content.Context;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+
+// 基类
+public abstract class JSONHandler {
+
+    protected static Context mContext;
+
+    public JSONHandler(Context context) {
+        mContext = context;
+    }
+
+    // 解析数据
+    public abstract void process(JsonElement element);
+
+    // 生成ContentProviderOperation
+    public abstract void makeContentProviderOperations(ArrayList<ContentProviderOperation> list);
+
+    // 解析本地raw数据
+    public static String parseResource(Context context, int resource) throws IOException {
+        InputStream is = context.getResources().openRawResource(resource);
+        Writer writer = new StringWriter();
+        char[] buffer = new char[1024];
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            int n;
+            while ((n = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, n);
+            }
+        } finally {
+            is.close();
+        }
+
+        return writer.toString();
+    }
+}

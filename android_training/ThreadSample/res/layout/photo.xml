@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:image="http://schemas.android.com/apk/res/com.example.android.threadsample"
+    android:layout_width="0.0dip"
+    android:layout_height="fill_parent"
+    android:layout_weight="3.0" >
+
+    <!-- 全屏展示图片布局 -->
+
+    <ProgressBar
+        android:id="@+id/photoProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+
+    <com.example.android.threadsample.PhotoView
+        android:id="@+id/photoView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:scaleType="centerInside"
+        image:hideShowSibling="@id/photoProgress" />
+
+</FrameLayout>

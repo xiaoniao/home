@@ -1,0 +1,66 @@
+package com.example.volleytest;
+
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerException;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.Request.Method;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+
+public class MainActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        String url = "";
+
+        RequestQueue mQueue = Volley.newRequestQueue(getApplicationContext());
+
+        mQueue.add(new JsonObjectRequest(Method.GET, url, null, new Listener<JSONObject>() {
+
+        }, new ErrorListener() {
+
+            @Override
+            public void warning(TransformerException exception) throws TransformerException {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void fatalError(TransformerException exception) throws TransformerException {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void error(TransformerException exception) throws TransformerException {
+                // TODO Auto-generated method stub
+
+            }
+        }));
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}

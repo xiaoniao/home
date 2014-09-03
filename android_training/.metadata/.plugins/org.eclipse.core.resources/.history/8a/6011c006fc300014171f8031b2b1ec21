@@ -1,0 +1,259 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.example.android.threadsample;
+
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.util.AttributeSet;
+import android.view.View;
+import android.widget.ImageView;
+
+import java.lang.ref.WeakReference;
+import java.net.URL;
+
+/**
+ * 自定义的ImageView,下载、解析、展示图片
+ */
+public class PhotoView extends ImageView {
+
+	// 代表缓存是否可用
+	private boolean mCacheFlag;
+
+	// 代表图片是否加载完成 onDraw是否完成
+	private boolean mIsDrawn;
+
+	// 创建一个弱引用的，弱引用防止程序内存泄漏和崩溃,弱引用代表短暂的引用。ProgressBar
+	private WeakReference<View> mThisView;
+
+	// 资源id 这里是ProgressBar id
+	private int mHideShowResId = -1;
+
+	// 图片路径 真正的下载图片路径 依次使用方向 ——> Activity/Fragment --> PhotoView --> PhotoTask --> PhotoDownloadRunnable
+	private URL mImageURL;
+
+	// 下载图片线程
+	private PhotoTask mDownloadThread;
+
+	// 构造方法
+	public PhotoView(Context context) {
+		super(context);
+	}
+
+	// 构造方法
+	public PhotoView(Context context, AttributeSet attributeSet) {
+		super(context, attributeSet);
+		getAttributes(attributeSet);
+	}
+
+	// 构造方法
+	public PhotoView(Context context, AttributeSet attributeSet, int defaultStyle) {
+		super(context, attributeSet, defaultStyle);
+		getAttributes(attributeSet);
+	}
+
+	// 读取xml属性
+	private void getAttributes(AttributeSet attributeSet) {
+		TypedArray attributes = getContext().obtainStyledAttributes(attributeSet, R.styleable.ImageDownloaderView);
+		// 获取引用 id
+		mHideShowResId = attributes.getResourceId(R.styleable.ImageDownloaderView_hideShowSibling, -1);
+		attributes.recycle();
+	}
+
+	// 设置ProgressBar可见性
+	private void showView(int visState) {
+		if (mThisView != null) {
+			// 通过弱引用获得一个强引用
+			View localView = mThisView.get();
+			if (localView != null) {
+				localView.setVisibility(visState);
+			}
+		}
+	}
+
+	// 清空图片
+	public void clearImage() {
+		setImageDrawable(null);
+		showView(View.VISIBLE);
+	}
+
+	// 获得图片url
+	final URL getLocation() {
+		return mImageURL;
+	}
+
+	/*
+	 * 当ImageView关联到屏幕上是调用，在onDraw()前调用，也可能在onMeasure()方法后
+	 */
+	@Override
+	protected void onAttachedToWindow() {
+		super.onAttachedToWindow();
+
+		// 如果在布局里面设置了mHideShowResId属性
+		if ((this.mHideShowResId != -1) && ((getParent() instanceof View))) {
+
+			// 获得兄弟view,对应布局里的ProgressBar ps:这样获得控件的方式很好
+			View localView = ((View) getParent()).findViewById(this.mHideShowResId);
+
+			// 实例化为弱引用
+			if (localView != null) {
+				this.mThisView = new WeakReference<View>(localView);
+			}
+		}
+	}
+
+	/*
+	 * 当ImageView 从 Window移除的时候调用, 置空变量防止内存泄漏
+	 */
+	@Override
+	protected void onDetachedFromWindow() {
+
+		// 清空图片，关闭缓存，取消图片和url'的链接
+		setImageURL(null, false, null);
+
+		// 获得图片
+		Drawable localDrawable = getDrawable();
+
+		// 取消图片和ImageView的绑定
+		if (localDrawable != null)
+			localDrawable.setCallback(null);
+
+		// 清空置空弱引用
+		if (mThisView != null) {
+			mThisView.clear();
+			mThisView = null;
+		}
+
+		// 置空下载线程
+		this.mDownloadThread = null;
+
+		super.onDetachedFromWindow();
+	}
+
+	/*
+	 * 如果图片没有绘制过，或者图片路径不为空，就调用下载线程下载图片，否则仅调用一下父方法
+	 */
+	@Override
+	protected void onDraw(Canvas canvas) {
+		if ((!mIsDrawn) && (mImageURL != null)) {
+			// 开始下载图片线程，使用当前的缓存值
+			mDownloadThread = PhotoManager.startDownload(this, mCacheFlag);
+			mIsDrawn = true;
+		}
+		super.onDraw(canvas);
+	}
+
+	/**
+	 * 设置一个view为当前弱引用
+	 */
+	public void setHideView(View view) {
+		this.mThisView = new WeakReference<View>(view);
+	}
+
+	// 设置图片
+	@Override
+	public void setImageBitmap(Bitmap paramBitmap) {
+		super.setImageBitmap(paramBitmap);
+	}
+
+	// 设置图片
+	@Override
+	public void setImageDrawable(Drawable drawable) {
+		int viewState; // 可见性
+
+		// 设置ProgressBar可见性
+		// 当设置setImageDrawable为空、清空图片的时候设置为可见，否则设置ProgressBar不可见再刷新它之前
+		if (drawable == null) {
+
+			viewState = View.VISIBLE;
+		} else {
+
+			viewState = View.INVISIBLE;
+		}
+		showView(viewState);
+
+		super.setImageDrawable(drawable);
+	}
+
+	// 显示图片
+	@Override
+	public void setImageResource(int resId) {
+		super.setImageResource(resId);
+	}
+
+	// 通过设置Uri显示图片 ??
+	@Override
+	public void setImageURI(Uri uri) {
+		super.setImageURI(uri);
+	}
+
+	/**
+	 * 给图片设置URL,然后下载图片
+	 * 
+	 * 1、如果图片的URL已经存在，但是新的URL和已存在的不一样，然后PhotoView 移除或停止下载线程
+	 * 
+	 * 2、如果新的URL和已存在的一样，那什么也不干
+	 * 
+	 * 3、如果已存在的URL是空的，那么开始下载并且解析图片
+	 * 
+	 */
+	public void setImageURL(URL pictureURL, boolean cacheFlag, Drawable imageDrawable) {
+		if (mImageURL != null) { // 如果URL已经存在
+
+			if (!mImageURL.equals(pictureURL)) { // 如果新的URL和已存在的URL不一样
+				// 移除正在现在的线程
+				PhotoManager.removeDownload(mDownloadThread, mImageURL);
+			} else {
+				// 和已存在URL一致，什么也不干
+				return;
+			}
+		}
+
+		// 设置默认图片
+		setImageDrawable(imageDrawable);
+
+		// 保存URL为当前URL
+		mImageURL = pictureURL;
+
+		// 如果已经执行了onDraw()方法
+		if ((mIsDrawn) && (pictureURL != null)) {
+			// 是否缓存标识
+			mCacheFlag = cacheFlag;
+
+			// 开始下载图片文件，注意：如果开始cache，图片文件有可能是从缓存中读取的
+			mDownloadThread = PhotoManager.startDownload(this, cacheFlag);
+		}
+	}
+
+	// 设置图片，如果弱引用是空的话
+	public void setStatusDrawable(Drawable drawable) {
+		if (mThisView == null) {
+			setImageDrawable(drawable);
+		}
+	}
+
+	// 设置图片，如果弱引用是空的话
+	public void setStatusResource(int resId) {
+
+		if (mThisView == null) {
+			setImageResource(resId);
+		}
+	}
+}

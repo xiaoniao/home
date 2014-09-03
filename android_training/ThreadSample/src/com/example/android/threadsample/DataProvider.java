@@ -1,0 +1,301 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.example.android.threadsample;
+
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.UriMatcher;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
+import android.util.Log;
+import android.util.SparseArray;
+
+/**
+ * 内容提供者，用于保存URL和另一个表保存图片修改时间
+ */
+public class DataProvider extends ContentProvider {
+
+	public static final String LOG_TAG = "DataProvider";
+
+	public static final int IMAGE_URL_QUERY = 1; // 查询图片URL
+	public static final int URL_DATE_QUERY = 2;  // 查询图片修改时间
+	public static final int INVALID_URI = -1;    // 无效的URI
+
+	// 表初始化属性值
+	private static final String TEXT_TYPE = "TEXT";                       // 文本
+	private static final String PRIMARY_KEY_TYPE = "INTEGER PRIMARY KEY"; // 主键
+	private static final String INTEGER_TYPE = "INTEGER";                 // 数值
+
+	// URL 建表语句
+	private static final String CREATE_PICTUREURL_TABLE_SQL = "CREATE TABLE" + " " + 
+	            DataProviderContract.PICTUREURL_TABLE_NAME    + " "   + "(" + " " + 
+	            DataProviderContract.ROW_ID                   + " "   + PRIMARY_KEY_TYPE + " ," + 
+	            DataProviderContract.IMAGE_THUMBURL_COLUMN    + " "   + TEXT_TYPE + " ," + 
+	            DataProviderContract.IMAGE_URL_COLUMN         + " "   + TEXT_TYPE + " ," + 
+	            DataProviderContract.IMAGE_THUMBNAME_COLUMN   + " "   + TEXT_TYPE + " ," + 
+	            DataProviderContract.IMAGE_PICTURENAME_COLUMN + " "   + TEXT_TYPE + ")";
+
+	// 修改时间 建表语句
+	private static final String CREATE_DATE_TABLE_SQL = "CREATE TABLE" + " " + 
+	            DataProviderContract.DATE_TABLE_NAME + " " + "(" + " " + 
+	            DataProviderContract.ROW_ID + " " + PRIMARY_KEY_TYPE + " ," + 
+	            DataProviderContract.DATA_DATE_COLUMN + " " + INTEGER_TYPE + ")";
+
+	// 帮助创建数据库
+	private SQLiteOpenHelper mHelper;
+
+	// 匹配Uri
+	private static final UriMatcher sUriMatcher;
+
+	// 保存MIME类型
+	private static final SparseArray<String> sMimeTypes;
+
+	/*
+	 * 初始化数据 UriMatcher用于映射URI到integer代码，MineType数组返回表的MIME类型
+	 */
+	static {
+
+		sUriMatcher = new UriMatcher(0);
+		sMimeTypes = new SparseArray<String>();
+
+		sUriMatcher.addURI(DataProviderContract.AUTHORITY, DataProviderContract.PICTUREURL_TABLE_NAME, IMAGE_URL_QUERY);
+		sUriMatcher.addURI(DataProviderContract.AUTHORITY, DataProviderContract.DATE_TABLE_NAME, URL_DATE_QUERY);
+
+		// 指定自定义MIME类型 为 URL表
+		sMimeTypes.put(IMAGE_URL_QUERY, "vnd.android.cursor.dir/vnd." + DataProviderContract.AUTHORITY + "." + DataProviderContract.PICTUREURL_TABLE_NAME);
+		// 指定自定义MIME类型 为修改时间单行
+		sMimeTypes.put(URL_DATE_QUERY, "vnd.android.cursor.item/vnd." + DataProviderContract.AUTHORITY + "." + DataProviderContract.DATE_TABLE_NAME);
+	}
+
+	// 关闭，防止内存泄漏
+	public void close() {
+		mHelper.close();
+	}
+
+	// 定义SQLiteOpenHelper，用于创建打开数据库
+	private class DataProviderHelper extends SQLiteOpenHelper {
+
+		// 构造方法
+		DataProviderHelper(Context context) {
+			super(context, DataProviderContract.DATABASE_NAME, null, DataProviderContract.DATABASE_VERSION);
+		}
+
+		// 删除所有表
+		private void dropTables(SQLiteDatabase db) {
+			db.execSQL("DROP TABLE IF EXISTS " + DataProviderContract.PICTUREURL_TABLE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + DataProviderContract.DATE_TABLE_NAME);
+		}
+
+		/**
+		 * 调用getWriteableDatabase或者getReadableDatabase并且db还没有被实例化的时候调用
+		 */
+		@Override
+		public void onCreate(SQLiteDatabase db) {
+			// 创建表
+			db.execSQL(CREATE_PICTUREURL_TABLE_SQL);
+			// 创建表
+			db.execSQL(CREATE_DATE_TABLE_SQL);
+		}
+
+		// 更新数据库，删除旧的表，创建新的
+		@Override
+		public void onUpgrade(SQLiteDatabase db, int version1, int version2) {
+			Log.w(DataProviderHelper.class.getName(), "Upgrading database from version " + version1 + " to " + version2 + ", which will destroy all the existing data");
+			// 删除所有表
+			dropTables(db);
+			// 重新执行onCreate
+			onCreate(db);
+		}
+
+		// 版本降级调用
+		@Override
+		public void onDowngrade(SQLiteDatabase db, int version1, int version2) {
+			Log.w(DataProviderHelper.class.getName(), "Downgrading database from version " + version1 + " to " + version2 + ", which will destroy all the existing data");
+			// 删除所有表
+			dropTables(db);
+			// 重新执行onCreate
+			onCreate(db);
+		}
+	}
+
+	/**
+	 * 初始化ContentProvider,注意，这里只是简单的实例化了SQLiteOpenHelper并返回，
+	 * 
+	 * 应该做更多的初始化在static 区域内，或者在SQLiteDatabase.onCreate()
+	 */
+	@Override
+	public boolean onCreate() {
+		mHelper = new DataProviderHelper(getContext());
+		return true;
+	}
+
+	// 查询
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+
+		// 获得数据库
+		SQLiteDatabase db = mHelper.getReadableDatabase();
+
+		switch (sUriMatcher.match(uri)) {
+
+		case IMAGE_URL_QUERY: // 查询URL
+
+			Cursor returnCursor = db.query(DataProviderContract.PICTUREURL_TABLE_NAME, projection, 
+			                                null, null, null, null, null);
+
+			returnCursor.setNotificationUri(getContext().getContentResolver(), uri);  // 通知更新数据
+
+			return returnCursor;
+
+		case URL_DATE_QUERY: // 查询修改时间
+
+			returnCursor = db.query(DataProviderContract.DATE_TABLE_NAME, projection, selection, 
+			                                selectionArgs, null, null, sortOrder);
+
+			return returnCursor;
+
+		case INVALID_URI:
+
+			throw new IllegalArgumentException("Query -- Invalid URI:" + uri);
+		}
+
+		return null;
+	}
+
+	// 获得指定Uri的mimeType类型
+	@Override
+	public String getType(Uri uri) {
+
+		return sMimeTypes.get(sUriMatcher.match(uri));
+	}
+
+	// 往表中插入单行
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+
+		switch (sUriMatcher.match(uri)) {
+
+		case URL_DATE_QUERY:
+
+			// 获得一个可写可读的数据库
+			SQLiteDatabase localSQLiteDatabase = mHelper.getWritableDatabase();
+
+			// 插入数据库
+			long id = localSQLiteDatabase.insert(DataProviderContract.DATE_TABLE_NAME, 
+			                                     DataProviderContract.DATA_DATE_COLUMN, values);
+
+			if (-1 != id) {
+
+				// 插入成功
+				getContext().getContentResolver().notifyChange(uri, null);
+
+				return Uri.withAppendedPath(uri, Long.toString(id));
+
+			} else {
+
+				// 插入失败
+				throw new SQLiteException("Insert error:" + uri);
+
+			}
+		case IMAGE_URL_QUERY:
+
+			throw new IllegalArgumentException("Insert: Invalid URI" + uri);
+		}
+
+		return null;
+	}
+
+	// 批量插入
+	@Override
+	public int bulkInsert(Uri uri, ContentValues[] insertValuesArray) {
+
+		switch (sUriMatcher.match(uri)) {
+
+		case IMAGE_URL_QUERY:
+
+			SQLiteDatabase localSQLiteDatabase = mHelper.getWritableDatabase();
+
+			localSQLiteDatabase.beginTransaction();
+
+			localSQLiteDatabase.delete(DataProviderContract.PICTUREURL_TABLE_NAME, null, null);
+
+			int numImages = insertValuesArray.length;
+
+			for (int i = 0; i < numImages; i++) {
+
+				localSQLiteDatabase.insert(DataProviderContract.PICTUREURL_TABLE_NAME, DataProviderContract.IMAGE_URL_COLUMN, insertValuesArray[i]);
+			}
+
+			localSQLiteDatabase.setTransactionSuccessful();
+
+			localSQLiteDatabase.endTransaction();
+			localSQLiteDatabase.close();
+
+			getContext().getContentResolver().notifyChange(uri, null);
+
+			return numImages;
+
+		case URL_DATE_QUERY:
+
+			return super.bulkInsert(uri, insertValuesArray);
+
+		case INVALID_URI:
+
+			throw new IllegalArgumentException("Bulk insert -- Invalid URI:" + uri);
+		}
+
+		return -1;
+
+	}
+
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+
+		throw new UnsupportedOperationException("Delete -- unsupported operation " + uri);
+	}
+
+	@Override
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+
+		switch (sUriMatcher.match(uri)) {
+
+		case URL_DATE_QUERY:
+
+			SQLiteDatabase localSQLiteDatabase = mHelper.getWritableDatabase();
+
+			int rows = localSQLiteDatabase.update(DataProviderContract.DATE_TABLE_NAME, values, selection, selectionArgs);
+
+			if (0 != rows) {
+				getContext().getContentResolver().notifyChange(uri, null);
+				return rows;
+			} else {
+
+				throw new SQLiteException("Update error:" + uri);
+			}
+
+		case IMAGE_URL_QUERY:
+
+			throw new IllegalArgumentException("Update: Invalid URI: " + uri);
+		}
+
+		return -1;
+	}
+}

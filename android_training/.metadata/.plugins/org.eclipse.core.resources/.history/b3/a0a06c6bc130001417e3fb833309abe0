@@ -1,0 +1,10 @@
+package com.test.interfa;
+
+public class InterfaceTest implements IDecode, IDownload {
+
+    @Override
+    public void hello() {
+        
+    }
+
+}

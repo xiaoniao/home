@@ -1,0 +1,12 @@
+package com.test.interfa;
+
+public class InterfaceTest implements IDownload, IDecode {
+
+    /** 如果俩接口中有同一个方法 **/
+
+    @Override
+    public void hello() {
+
+    }
+
+}

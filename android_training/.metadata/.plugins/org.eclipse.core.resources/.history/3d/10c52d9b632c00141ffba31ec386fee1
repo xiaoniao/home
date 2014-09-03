@@ -1,0 +1,10 @@
+package com.test.Thread;
+
+public class MyDaemon implements Runnable {
+
+    @Override
+    public void run() {
+
+    }
+
+}

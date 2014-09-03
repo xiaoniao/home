@@ -1,0 +1,15 @@
+package com.test.StringTest;
+
+public class Refer {
+
+    public static void main(String[] args) {
+        
+        String str = "abc";
+        
+        change(str);
+    }
+
+    public static void change(String str) {
+        str = "gbc";
+    }
+}

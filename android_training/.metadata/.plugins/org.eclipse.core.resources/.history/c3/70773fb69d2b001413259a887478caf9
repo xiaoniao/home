@@ -1,0 +1,31 @@
+package com.example.wifimanager;
+
+import android.app.Activity;
+import android.content.Context;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
+import android.os.Bundle;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        
+        // ´´½¨wifi
+        
+        WifiManager WifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = String.format("\"%s\"", "wifi2014");
+        wifiConfiguration.preSharedKey = String.format("\"%s\"", "mykeyllll");
+
+        int netId = WifiManager.addNetwork(wifiConfiguration);
+
+        if (netId != -1) {
+            WifiManager.enableNetwork(netId, false);
+        }
+
+    }
+}

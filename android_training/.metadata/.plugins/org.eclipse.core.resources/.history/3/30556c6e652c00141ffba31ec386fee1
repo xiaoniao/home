@@ -1,0 +1,8 @@
+package com.test.Thread;
+
+public class User {
+    
+    private String code;
+    private int cash;
+
+}
