@@ -1,0 +1,15 @@
+package com.example.volleytraing;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class RequestQueueActivity extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		// 一个RequestQueue需要两部分来支持它的工作：
+		// 一部分是网络操作用来执行请求的数据传输,另外一个是用来处理缓存操作的Cache
+	}
+}

@@ -9,11 +9,67 @@
     tools:context="com.example.volleytest.MainActivity" >
 
     <ImageView
-        android:id="@+id/imageView1"
+        android:id="@+id/iv_volley"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="143dp"
+        android:background="@android:color/black" />
+
+    <Button
+        android:id="@+id/bt_netimage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/bt_json"
+        android:layout_below="@+id/bt_image"
+        android:layout_marginTop="19dp"
+        android:text="NetWorkingImage" />
+
+    <Button
+        android:id="@+id/bt_imageloder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/bt_netimage"
+        android:layout_alignBottom="@+id/bt_netimage"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="29dp"
+        android:text="ImageLoader" />
+
+    <Button
+        android:id="@+id/bt_json"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/bt_image"
+        android:layout_marginBottom="26dp"
+        android:layout_toLeftOf="@+id/iv_volley"
+        android:text="JSON数据" />
+
+    <Button
+        android:id="@+id/bt_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/bt_imageloder"
+        android:layout_below="@+id/iv_volley"
+        android:layout_marginTop="47dp"
+        android:text="ImageRequest" />
+
+    <TextView
+        android:id="@+id/tv_volley"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="143dp" />
+        android:layout_marginTop="15dp"
+        android:layout_toLeftOf="@+id/iv_volley"
+        android:text="TextView" />
+
+    <com.android.volley.toolbox.NetworkImageView
+        android:id="@+id/netIV_volley"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_volley"
+        android:layout_marginTop="43dp"
+        android:layout_toRightOf="@+id/iv_volley"
+        android:src="@drawable/ic_launcher" />
 
 </RelativeLayout>

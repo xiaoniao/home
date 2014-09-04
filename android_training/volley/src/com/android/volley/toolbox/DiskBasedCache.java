@@ -37,6 +37,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * 
+ * ImageRequest使用的是DiskBasedCache缓存
+ * 
  * Cache implementation that caches files directly onto the hard disk in the specified directory. The default disk usage size is 5MB, but is configurable.
  */
 public class DiskBasedCache implements Cache {

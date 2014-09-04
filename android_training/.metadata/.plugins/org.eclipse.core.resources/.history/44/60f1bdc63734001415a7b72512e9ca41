@@ -1,0 +1,19 @@
+package com.example.volleytraing;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class RequestQueueActivity extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		// 一个RequestQueue需要两部分来支持它的工作：
+		// 一部分是网络操作用来执行请求的数据传输,另外一个是用来处理缓存操作的Cache
+
+		// 在Volley的工具箱中包含了标准的实现方式：
+		// DiskBasedCache提供了每个文件与对应响应数据一一映射的缓存实现。 BasicNetwork提供了一个网络传输的实现，连接方式可以是AndroidHttpClient 或者是 HttpURLConnection.
+
+	}
+}

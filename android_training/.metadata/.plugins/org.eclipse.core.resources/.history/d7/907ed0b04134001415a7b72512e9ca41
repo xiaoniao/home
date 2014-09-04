@@ -1,0 +1,44 @@
+package com.example.volleytraing;
+
+import android.graphics.Bitmap;
+import android.support.v4.util.LruCache;
+
+import com.android.volley.Cache;
+
+public class LruBitmapCache extends LruCache<String, Bitmap> implements Cache {
+
+	public LruBitmapCache(int maxSize) {
+		super(maxSize);
+	}
+
+	@Override
+	public Cache.Entry get(String key) {
+		return null;
+	}
+
+	@Override
+	public void put(String key, Entry entry) {
+
+	}
+
+	@Override
+	public void initialize() {
+
+	}
+
+	@Override
+	public void invalidate(String key, boolean fullExpire) {
+
+	}
+
+	@Override
+	public void remove(String key) {
+
+	}
+
+	@Override
+	public void clear() {
+
+	}
+
+}

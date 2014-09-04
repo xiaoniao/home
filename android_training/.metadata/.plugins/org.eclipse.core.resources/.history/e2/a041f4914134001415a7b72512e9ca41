@@ -1,0 +1,50 @@
+package com.example.volleytraing;
+
+import com.android.volley.Cache;
+
+import android.graphics.Bitmap;
+import android.support.v4.util.LruCache;
+
+public class LruBitmapCache extends LruCache<String, Bitmap> implements Cache {
+
+	public LruBitmapCache(int maxSize) {
+		super(maxSize);
+	}
+
+	@Override
+	public Entry get(String key) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void put(String key, Entry entry) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void initialize() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void invalidate(String key, boolean fullExpire) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void remove(String key) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void clear() {
+		// TODO Auto-generated method stub
+
+	}
+
+}

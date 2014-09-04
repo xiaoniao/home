@@ -1,0 +1,18 @@
+package com.example.volleytraing;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+/**
+ * 常用请求类型：
+ *
+ */
+
+public class StandardRequestActivty extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+	}
+}

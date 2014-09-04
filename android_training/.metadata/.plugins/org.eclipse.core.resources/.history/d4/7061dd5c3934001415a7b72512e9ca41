@@ -1,0 +1,20 @@
+package com.example.volleytraing;
+
+import android.content.Context;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.ImageLoader;
+
+public class MySingleton {
+
+	private MySingleton mInstance;
+	private RequestQueue requestQueue;
+	private ImageLoader imageLoader;
+	private Context context;
+
+	public MySingleton(Context context) {
+		this.context = context;
+		
+		requestQueue = new RequestQueue();
+	}
+}

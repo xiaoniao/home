@@ -1,0 +1,10 @@
+package com.example.volleytraing;
+
+import com.android.volley.Cache;
+
+import android.graphics.Bitmap;
+import android.support.v4.util.LruCache;
+
+public class LruBitmapCache extends LruCache<String, Bitmap> {
+
+}

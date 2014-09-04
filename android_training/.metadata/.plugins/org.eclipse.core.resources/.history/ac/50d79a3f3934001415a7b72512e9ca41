@@ -1,0 +1,10 @@
+package com.example.volleytraing;
+
+import com.android.volley.RequestQueue;
+
+public class MySingleton {
+
+	private MySingleton mInstance;
+	
+	private RequestQueue requestQueue;
+}

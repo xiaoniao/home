@@ -1,0 +1,6 @@
+package com.example.volleytraing;
+
+public class MySingleton {
+
+	private MySingleton mInstance;
+}
