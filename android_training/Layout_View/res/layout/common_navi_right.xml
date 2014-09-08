@@ -1,0 +1,17 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="200dp"
+    android:layout_height="200dp"
+    android:background="#ff99cc00" >
+
+    <!-- 注意这里 android:layout_alignParentRight="true" 虽然在这里不管用 但是因为包含在父容器为RelativeLayotu中同样也是有效果的 -->
+
+    <Button
+        android:id="@+id/btn"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentRight="true"
+        android:text="Ok"
+        android:textColor="@android:color/black" />
+
+</merge>
